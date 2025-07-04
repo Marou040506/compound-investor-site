@@ -39,7 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const ctx = document.getElementById("projectionChart").getContext("2d");
-        if(window.projectionChart) window.projectionChart.destroy();
+       if (window.projectionChart instanceof Chart) {
+    window.projectionChart.destroy();
+}
         window.projectionChart = new Chart(ctx, {
             type:'line',
             data:{
