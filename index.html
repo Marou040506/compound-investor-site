@@ -9,47 +9,67 @@
 </head>
 <body class="bg-gradient-to-b from-orange-50 to-white text-gray-900 font-sans min-h-screen">
 
-  <div class="max-w-3xl mx-auto p-6">
+  <div class="max-w-4xl mx-auto p-6">
     <h1 class="text-3xl font-bold text-center mb-6">Smart Compound ROI Simulator</h1>
 
-    <div class="grid md:grid-cols-2 gap-4 mb-4">
-      <label class="block">
-        <span class="text-gray-700">Capital (USD)</span>
-        <input type="number" id="capital" value="100000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-200 focus:border-orange-500">
-      </label>
-
-      <label class="block">
-        <span class="text-gray-700">Target Weekly ROI (%)</span>
-        <input type="number" id="weeklyRoi" value="5" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-200 focus:border-orange-500">
-      </label>
+    <!-- Toggle buttons -->
+    <div class="flex justify-center mb-6">
+      <button id="calcViewBtn" class="px-4 py-2 bg-orange-500 text-white rounded-l-lg">Calculation View</button>
+      <button id="tradeViewBtn" class="px-4 py-2 bg-orange-100 text-orange-700 rounded-r-lg">Trading View</button>
     </div>
 
-    <div class="flex flex-wrap gap-4 mb-6">
-      <label><input type="checkbox" id="useDrawdowns" class="mr-2"> Simulate Drawdowns</label>
-      <label><input type="checkbox" id="useRandomROI" class="mr-2"> Use Random Weekly ROI</label>
-      <label><input type="checkbox" id="useHistorical" class="mr-2"> Use Real Historical Data</label>
+    <!-- Calculation View -->
+    <div id="calculationView">
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <label class="block">
+          <span class="text-gray-700">Capital (USD)</span>
+          <input type="number" id="capital" value="100000" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-200 focus:border-orange-500">
+        </label>
+
+        <label class="block">
+          <span class="text-gray-700">Target Weekly ROI (%)</span>
+          <input type="number" id="weeklyRoi" value="5" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-200 focus:border-orange-500">
+        </label>
+      </div>
+
+      <div class="flex flex-wrap gap-4 mb-6">
+        <label><input type="checkbox" id="useDrawdowns" class="mr-2"> Simulate Drawdowns</label>
+        <label><input type="checkbox" id="useRandomROI" class="mr-2"> Use Random Weekly ROI</label>
+        <label><input type="checkbox" id="useHistorical" class="mr-2"> Use Real Historical Data</label>
+      </div>
+
+      <div class="text-center mb-6">
+        <button id="generateBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg shadow transition-all">
+          Generate Plan
+        </button>
+      </div>
+
+      <div id="output-panel" class="hidden">
+        <div class="mb-6" id="planSummary"></div>
+        <canvas id="projectionChart" height="200"></canvas>
+
+        <h2 class="text-xl font-semibold mt-8 mb-2">Weekly Projection Table</h2>
+        <table id="projectionTable" class="w-full table-auto text-sm text-right border-collapse border border-gray-200">
+          <thead><tr><th class="border px-2 py-1">Week</th><th class="border px-2 py-1">Value</th><th class="border px-2 py-1">Weekly ROI</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="text-center mb-6">
-      <button id="generateBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg shadow transition-all">
-        Generate Plan
-      </button>
-    </div>
-
-    <div id="output-panel" class="hidden">
-      <div class="mb-6" id="planSummary"></div>
-
-      <h2 class="text-xl font-semibold mb-2">Projection Chart</h2>
-      <canvas id="projectionChart" height="200"></canvas>
-
-      <h2 class="text-xl font-semibold mt-8 mb-2">Weekly Projection Table</h2>
-      <table id="projectionTable" class="w-full table-auto text-sm text-right border-collapse border border-gray-200">
-        <thead><tr><th class="border px-2 py-1">Week</th><th class="border px-2 py-1">Value</th><th class="border px-2 py-1">Weekly ROI</th></tr></thead>
-        <tbody></tbody>
-      </table>
+    <!-- Trading View -->
+    <div id="tradingView" class="hidden">
+      <div class="mb-4 flex space-x-4 justify-center">
+        <button class="tv-tab bg-orange-100 px-4 py-2 rounded-md text-sm" data-symbol="BTCUSD">BTC</button>
+        <button class="tv-tab bg-orange-100 px-4 py-2 rounded-md text-sm" data-symbol="ETHUSD">ETH</button>
+        <button class="tv-tab bg-orange-100 px-4 py-2 rounded-md text-sm" data-symbol="SPY">SPY</button>
+      </div>
+      <div id="tv-widget" class="rounded-md shadow border overflow-hidden">
+        <!-- Widget gets injected here -->
+      </div>
     </div>
   </div>
 
   <script src="script.js"></script>
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 </body>
 </html>
