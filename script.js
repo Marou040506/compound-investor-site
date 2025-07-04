@@ -2,68 +2,84 @@
 window.projectionChart = null;
 
 const allocation = { BTC: 0.40, ETH: 0.30, SPY: 0.30 };
-const backtestROI = 0.228;
-const backtestStartDate = "2025‑05‑05";
-const backtestEndDate   = "2025‑07‑03";
+const historicalReturns = [0.018, 0.035, -0.012, 0.027, 0.044, -0.009, 0.038, 0.006, 0.03, -0.005, 0.019, 0.021];
 
-function compoundProjection(capital, weeklyRate, weeks=12){
-  const points = [];
-  for(let i=0;i<=weeks;i++){
-    let value = capital * Math.pow(1+weeklyRate, i);
-    points.push({week:i, value});
-  }
-  return points;
+function getRandomROI(mean = 0.03, stdDev = 0.025) {
+  const u1 = Math.random();
+  const u2 = Math.random();
+  const randStdNormal = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  return parseFloat((mean + stdDev * randStdNormal).toFixed(4));
 }
 
-function formatUSD(x){ return "$" + x.toLocaleString(undefined,{maximumFractionDigits:0}); }
+function simulateWeeklyValues(capital, baseROI, useRandom, useDrawdowns, useHistorical) {
+  const weeks = 12;
+  const values = [];
+  let currentValue = capital;
 
-function showTab(tabId) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('border-b-2', 'border-orange-500'));
-  document.querySelector(`[data-tab="${tabId}"]`).classList.add('border-b-2', 'border-orange-500');
-  document.getElementById("tab-" + tabId).classList.remove('hidden');
+  for (let i = 0; i <= weeks; i++) {
+    let roi;
+
+    if (useHistorical) {
+      roi = historicalReturns[i] ?? baseROI;
+    } else if (useRandom) {
+      roi = getRandomROI();
+    } else {
+      roi = baseROI;
+    }
+
+    if (useDrawdowns && (i === 3 || i === 7)) {
+      roi = -0.05;
+    }
+
+    values.push({ week: i, roi, value: currentValue });
+    currentValue = currentValue * (1 + roi);
+  }
+
+  return values;
+}
+
+function formatUSD(x) {
+  return "$" + x.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      showTab(btn.dataset.tab);
-    });
-  });
-
   document.getElementById("generateBtn").addEventListener("click", () => {
     const cap = parseFloat(document.getElementById("capital").value);
     const roiPct = parseFloat(document.getElementById("weeklyRoi").value);
-    if(isNaN(cap) || isNaN(roiPct)) return;
+    if (isNaN(cap) || isNaN(roiPct)) return;
 
-    const weeklyRate = roiPct/100;
-    const proj = compoundProjection(cap, weeklyRate);
+    const baseROI = roiPct / 100;
+    const useRandom = document.getElementById("useRandomROI").checked;
+    const useDrawdowns = document.getElementById("useDrawdowns").checked;
+    const useHistorical = document.getElementById("useHistorical").checked;
+
+    const results = simulateWeeklyValues(cap, baseROI, useRandom, useDrawdowns, useHistorical);
 
     const planDiv = document.getElementById("planSummary");
     planDiv.innerHTML = `
-      <p><strong>Capital:</strong> ${formatUSD(cap)}</p>
-      <p><strong>Target Weekly ROI:</strong> ${roiPct}%</p>
-      <p><strong>Suggested Allocation:</strong> BTC ${allocation.BTC*100}%, ETH ${allocation.ETH*100}%, SPY ${allocation.SPY*100}%</p>
+      <p><strong>Starting Capital:</strong> ${formatUSD(cap)}</p>
+      <p><strong>Simulation Mode:</strong> ${useHistorical ? 'Real Historical Returns' : useRandom ? 'Random ROI' : 'Fixed ROI'}</p>
+      <p><strong>Drawdowns:</strong> ${useDrawdowns ? 'Enabled' : 'None'}</p>
     `;
 
-    const table = document.getElementById("projectionTable");
-    table.innerHTML = "<thead><tr><th class='border px-2 py-1'>Week</th><th class='border px-2 py-1'>Value</th></tr></thead><tbody>";
-    proj.forEach(pt => {
-      table.innerHTML += `<tr><td class='border px-2 py-1'>${pt.week}</td><td class='border px-2 py-1'>${formatUSD(pt.value)}</td></tr>`;
+    const tableBody = document.querySelector("#projectionTable tbody");
+    tableBody.innerHTML = "";
+    results.forEach(pt => {
+      tableBody.innerHTML += `<tr><td class='border px-2 py-1'>${pt.week}</td><td class='border px-2 py-1'>${formatUSD(pt.value)}</td><td class='border px-2 py-1'>${(pt.roi * 100).toFixed(2)}%</td></tr>`;
     });
-    table.innerHTML += "</tbody>";
 
     const ctx = document.getElementById("projectionChart").getContext("2d");
     if (window.projectionChart instanceof Chart) {
       window.projectionChart.destroy();
     }
+
     window.projectionChart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: proj.map(p => p.week),
+        labels: results.map(p => p.week),
         datasets: [{
-          label: 'Projected Equity',
-          data: proj.map(p => p.value),
+          label: 'Projected Value',
+          data: results.map(p => p.value),
           borderColor: '#f97316',
           fill: false,
           tension: 0.1
@@ -80,16 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    const backDiv = document.getElementById("backtestSummary");
-    const btGain = cap * backtestROI;
-    const btValue = cap + btGain;
-    backDiv.innerHTML = `
-      <p><strong>Period:</strong> ${backtestStartDate} → ${backtestEndDate}</p>
-      <p><strong>Strategy Return:</strong> ${(backtestROI*100).toFixed(1)}%</p>
-      <p><strong>Your capital would be:</strong> ${formatUSD(btValue)}</p>
-    `;
-
-    document.getElementById("tabs").classList.remove("hidden");
-    showTab("summary");
+    document.getElementById("output-panel").classList.remove("hidden");
   });
 });
