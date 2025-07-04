@@ -1,4 +1,4 @@
-
+window.projectionChart = null;
 const allocation = { BTC: 0.40, ETH: 0.30, SPY: 0.30 };
 const backtestROI = 0.228;
 const backtestStartDate = "2025‑05‑05";
