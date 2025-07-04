@@ -42,6 +42,25 @@ function formatUSD(x) {
   return "$" + x.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
+function loadTradingView(symbol) {
+  document.getElementById("tv-widget").innerHTML = "";
+  new TradingView.widget({
+    container_id: "tv-widget",
+    width: "100%",
+    height: 400,
+    symbol: symbol,
+    interval: "D",
+    timezone: "Etc/UTC",
+    theme: "light",
+    style: "1",
+    locale: "en",
+    toolbar_bg: "#f1f3f6",
+    enable_publishing: false,
+    allow_symbol_change: true,
+    hide_side_toolbar: false,
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("generateBtn").addEventListener("click", () => {
     const cap = parseFloat(document.getElementById("capital").value);
@@ -97,5 +116,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("output-panel").classList.remove("hidden");
+  });
+
+  // View toggle
+  document.getElementById("calcViewBtn").addEventListener("click", () => {
+    document.getElementById("calculationView").classList.remove("hidden");
+    document.getElementById("tradingView").classList.add("hidden");
+    document.getElementById("calcViewBtn").classList.replace("bg-orange-100", "bg-orange-500");
+    document.getElementById("calcViewBtn").classList.replace("text-orange-700", "text-white");
+    document.getElementById("tradeViewBtn").classList.replace("bg-orange-500", "bg-orange-100");
+    document.getElementById("tradeViewBtn").classList.replace("text-white", "text-orange-700");
+  });
+
+  document.getElementById("tradeViewBtn").addEventListener("click", () => {
+    document.getElementById("calculationView").classList.add("hidden");
+    document.getElementById("tradingView").classList.remove("hidden");
+    document.getElementById("tradeViewBtn").classList.replace("bg-orange-100", "bg-orange-500");
+    document.getElementById("tradeViewBtn").classList.replace("text-orange-700", "text-white");
+    document.getElementById("calcViewBtn").classList.replace("bg-orange-500", "bg-orange-100");
+    document.getElementById("calcViewBtn").classList.replace("text-white", "text-orange-700");
+    loadTradingView("BTCUSD");
+  });
+
+  document.querySelectorAll(".tv-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const symbol = btn.dataset.symbol;
+      loadTradingView(symbol);
+    });
   });
 });
